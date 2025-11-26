@@ -1,0 +1,227 @@
+---
+byjm hhggg---
+title: "Untitled"
+author: "Fadil"
+date: "2025-11-16"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Tugas Besar Komstat Pembangkit Bilangan Acak
+
+# "Penerapan metode pembangkit bilangan acak untuk pemodelan umur deteksi dan asal penyandang Thalassemia di Provinsi Lampung"
+
+## Load Data
+
+```{r}
+# Libraries
+library(dplyr)
+library(stringr)
+
+# Load dataset
+df <- read.csv("cleaned_data.csv", stringsAsFactors = FALSE)
+head(df)
+```
+
+## Preprocessing
+
+### Bersihkan kolom umur
+
+```{r}
+age_col <- grep("umur|tahun|age", names(df), ignore.case = TRUE, value = TRUE)[1]
+df[[age_col]] <- as.numeric(df[[age_col]])
+
+df <- df %>% filter(!is.na(df[[age_col]]))
+df <- df %>% filter(df[[age_col]] > 0 & df[[age_col]] < 100)
+
+age <- df[[age_col]]
+summary(age)
+
+```
+
+### Bersihkan kolom "asal penyandang"
+
+```{r}
+area_col <- grep("asal|daerah|kota|kab", names(df), ignore.case = TRUE, value = TRUE)[1]
+area_raw <- df[[area_col]]
+
+area_clean <- gsub("[0-9]", "", area_raw)            # hilangkan angka
+area_clean <- gsub("[^A-Za-z ]", "", area_clean)     # hilangkan karakter selain huruf/spasi
+area_clean <- trimws(area_clean)                     # trim spasi
+area_clean <- str_squish(area_clean)                 # rapikan spasi ganda
+
+area_clean <- tools::toTitleCase(tolower(area_clean))
+
+area_clean[area_clean == ""] <- NA
+area_clean <- na.omit(area_clean)
+
+df$asal_bersih <- area_clean
+area <- df$asal_bersih
+
+table(area)
+
+```
+
+## UPRG
+
+```{r}
+set.seed(123)
+u_runif <- runif(5000)
+```
+
+## RNG Umur
+
+```{r}
+LCG <- function(n, seed=12345, a=1103515245, c=12345, m=2^31){
+  x <- numeric(n)
+  x[1] <- seed %% m
+  for(i in 2:n){
+    x[i] <- (a*x[i-1] + c) %% m
+  }
+  return(x/m)
+}
+
+u_lcg <- LCG(5000)
+
+```
+
+### **Transformasi Linear (umur min–max)**
+
+```{r}
+min_age <- min(age)
+max_age <- max(age)
+
+age_runif_linear <- min_age + u_runif * (max_age - min_age)
+age_lcg_linear   <- min_age + u_lcg   * (max_age - min_age)
+```
+
+### Inverse Transform Umur
+
+```{r}
+empirical_inverse <- function(u, data){
+  quantile(data, probs = u, type = 1, names = FALSE)
+}
+
+age_runif_inv <- empirical_inverse(u_runif, age)
+age_lcg_inv   <- empirical_inverse(u_lcg,   age)
+```
+
+## RNG untuk Asal Penyandang (Kategori Diskrit)
+
+### Probabilitas Empiris
+
+```{r}
+area_prob <- prop.table(table(area))
+area_prob
+```
+
+### Sampling kategori
+
+```{r}
+set.seed(123)
+area_sim_runif <- sample(
+  names(area_prob),
+  size = 5000,
+  replace = TRUE,
+  prob = area_prob
+)
+```
+
+### Inverse Transform kategori
+
+```{r}
+inverse_discrete <- function(u, categories, probs){
+  cdf <- cumsum(probs)
+  idx <- findInterval(u, cdf) + 1
+  return(categories[idx])
+}
+
+area_sim_lcg <- inverse_discrete(
+  u_lcg,
+  categories = names(area_prob),
+  probs = as.numeric(area_prob)
+)
+```
+
+## Simulasi Penyandang Baru
+
+```{r}
+simulated_patients <- data.frame(
+  umur = age_lcg_inv[1:5000],
+  asal = area_sim_lcg[1:5000]
+)
+
+head(simulated_patients)
+```
+
+```{r}
+library(ggplot2)
+
+local({
+
+  df_umur <- data.frame(
+    umur = c(age, age_lcg_inv),
+    tipe = rep(c("Asli", "Simulasi"), c(length(age), length(age_lcg_inv)))
+  )
+
+  plot_umur <- ggplot(df_umur, aes(x=umur, fill=tipe)) +
+    geom_histogram(aes(y=..density..), bins=25, alpha=0.4, position="identity") +
+    geom_density(alpha=0.7) +
+    scale_fill_manual(values=c("Asli"="skyblue", "Simulasi"="salmon")) +
+    labs(
+      title = "Distribusi Umur (Asli vs Simulasi)",
+      x = "Umur (Tahun)",
+      y = "Kepadatan"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size=14, face="bold"),
+      legend.title = element_blank()
+    )
+
+  print(plot_umur)
+  invisible(NULL)
+
+})
+
+```
+
+```{r}
+library(ggplot2)
+
+local({
+
+  asal_asli_prop <- prop.table(table(area))
+  asal_sim_prop  <- prop.table(table(area_sim_lcg))
+
+  df_asal <- data.frame(
+    asal = factor(rep(names(asal_asli_prop), 2), levels = names(asal_asli_prop)),
+    prop = c(
+      as.numeric(asal_asli_prop),
+      as.numeric(asal_sim_prop)
+    ),
+    tipe = rep(c("Asli", "Simulasi"), each = length(asal_asli_prop))
+  )
+
+  plot_asal <- ggplot(df_asal, aes(x=asal, y=prop, fill=tipe)) +
+    geom_col(position="dodge", alpha=0.7) +
+    scale_fill_manual(values=c("Asli"="skyblue", "Simulasi"="salmon")) +
+    labs(
+      title = "Distribusi Asal Penyandang (Asli vs Simulasi)",
+      x = "Asal Penyandang",
+      y = "Proporsi"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size=14, face="bold"),
+      axis.text.x = element_text(angle=45, hjust=1, size=7),
+      legend.title = element_blank()
+    )
+
+  print(plot_asal)
+  invisible(NULL)
+
+})
+
+```
