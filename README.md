@@ -62,7 +62,7 @@ Metode Inverse Transform Empiris terbukti superior, menghasilkan distribusi simu
 
 
 ### B. Validasi Distribusi Asal Penyandang
-![Distribusi Asal Penyandang Asli vs Simulasi](https://drive.google.com/uc?export=view&id=ID/1BPzNU8A75ysxSQr25IMywg_Q9dX-orCX/view?usp=sharing)
+![Distribusi Asal Penyandang Asli vs Simulasi](https://drive.google.com/file/d/1BPzNU8A75ysxSQr25IMywg_Q9dX-orCX/view?usp=sharing)
 
 Teknik Sampling Invers Diskrit berhasil mengonservasi proporsi relatif kategori wilayah. Dominasi wilayah **Bandar Lampung** (proporsi tertinggi) di data simulasi terjaga.
 
