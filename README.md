@@ -87,5 +87,5 @@ Teknik Sampling Invers Diskrit berhasil mengonservasi proporsi relatif kategori 
 
 ## 📢 Poster Tugas Besar
 
-[![Poster Preview](Tugas%20Besar/poster_preview.png)](Tugas%20Besar/Poster_7_RB.pdf)
+![Poster Kelompok 7 RB](Tugas%20Besar/Poster_7_RB.jpeg)
 
