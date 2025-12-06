@@ -1,4 +1,4 @@
-# 🩸 Pemodelan dan Simulasi Distribusi Epidemiologi Thalassemia di Provinsi Lampung
+# 🩸 Penerapan Metode Pembangkit Bilangan Acak untuk Pemodelan Umur Deteksi dan Asal Penyandang Thalassemia di Provinsi Lampung
 
 ## 🚀 Proyek Tugas Besar Komputasi Statistika (Kelompok 7 RB)
 
@@ -84,3 +84,7 @@ Teknik Sampling Invers Diskrit berhasil mengonservasi proporsi relatif kategori 
 3.  **Pengembangan Model:** Penelitian selanjutnya dapat mempertimbangkan pemodelan multivariat atau menguji metode pembangkitan lain (misalnya, *Acceptance-Rejection*).
 
 ---
+
+##  📄 Poster
+![Poster Presentasi](Poster_7_RB.pdf)
+
